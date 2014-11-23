@@ -18,12 +18,19 @@ our @EXPORT_OK = qw(
                        proc_exists
                );
 
+our $CACHE = 0;
+
+my $_table_res;
 sub _table {
     state $pt = do {
         require Proc::ProcessTable;
         Proc::ProcessTable->new;
     };
     $pt->table;
+    if (!$CACHE || !$_table_res) {
+        $_table_res = $pt->table;
+    }
+    $_table_res;
 }
 
 sub find_proc {
@@ -195,6 +202,16 @@ existence by name, something that is commonly done in shell scripts using:
 and also some routines, C<find_*()>, to list processes matching some criteria.
 
 
+=head1 VARIABLES
+
+=head2 $Proc::Find::CACHE => bool (default: 0)
+
+If set to true, will cache the call to C<Proc::ProcessTable>'s C<table()> so
+subsequent invocation to C<find_proc()> or C<proc_exists> doesn't have to call
+the method again. But this also means that the process check/listing will be
+done on a past/stale process table.
+
+
 =head1 FUNCTIONS
 
 =head2 find_proc(%args) => \@pids (or \@procs)
@@ -271,6 +288,8 @@ If set to true, then will return all processes I<not> matching the criteria.
 Supply result from C<Proc::ProcessTable> object's C<table()>. This can be used
 to reuse the C<table()> cached result instead of repeatedly call C<table()> on
 every invocation.
+
+See also C<$Proc::Find::CACHE>.
 
 =item * detail => bool (default: 0)
 
