@@ -26,7 +26,6 @@ sub _table {
         require Proc::ProcessTable;
         Proc::ProcessTable->new;
     };
-    $pt->table;
     if (!$CACHE || !$_table_res) {
         $_table_res = $pt->table;
     }
