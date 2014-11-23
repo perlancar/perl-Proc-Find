@@ -38,7 +38,8 @@ sub find_proc {
     my @unknown_args = grep {!/\A(
                                    pid|name|cmndline|exec|
                                    user|uid|euser|euid|
-                                   table|detail
+                                   table|detail|
+                                   result_max
                                )\z/x} keys %args;
     die "Unknown arguments to find_proc(): ".join(", ", @unknown_args)
         if @unknown_args;
@@ -117,13 +118,17 @@ sub find_proc {
         } else {
             push @res, $p->{pid};
         }
+
+        if (defined $args{result_max}) {
+            last if @res >= $args{result_max};
+        }
     }
 
     \@res;
 }
 
 sub proc_exists {
-    @{ find_proc(@_) } > 0 ? 1:0;
+    @{ find_proc(@_, result_max=>1) } > 0 ? 1:0;
 }
 
 sub find_any_proc {
