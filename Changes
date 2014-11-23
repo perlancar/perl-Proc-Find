@@ -1,5 +1,13 @@
 Revision history for Proc-Find
 
+0.02    2014-11-23 (PERLANCAR)
+
+        - Add configuration variable $CACHE.
+
+        - Optimize proc_exists() by only requesting a single result from
+          find_proc().
+
+
 0.01    2014-11-23 (PERLANCAR)
 
         - First release.
