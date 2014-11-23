@@ -214,11 +214,12 @@ subtest proc_exists => sub {
 };
 
 subtest find_all_proc => sub {
-    ok 1;
+    is(~~@{ find_all_proc({table=>$table, euid=>1000}, {exec=>"bash"}) }, 1);
+    is(~~@{ find_all_proc({table=>$table, euid=>0}, {exec=>"bash"}) }, 0);
 };
 
 subtest find_any_proc => sub {
-    ok 1;
+    is(~~@{ find_any_proc({table=>$table, euid=>0}, {exec=>"bash"}) }, 2);
 };
 
 DONE_TESTING:
