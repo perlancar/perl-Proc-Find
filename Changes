@@ -1,5 +1,11 @@
 Revision history for Proc-Find
 
+0.03    2014-12-27 (PERLANCAR)
+
+	- Add our extra field: name (created from cmndline: take first word
+	  and strip path).
+
+
 0.02    2014-11-23 (PERLANCAR)
 
         - Add configuration variable $CACHE.
