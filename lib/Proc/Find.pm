@@ -50,6 +50,11 @@ sub find_proc {
 
     my @res;
     for my $p (@$table) {
+        # create extra fields
+        $p->{name} = $p->{cmndline};
+        $p->{name} =~ s/\s.*//;
+        $p->{name} =~ s!.+/!!;
+
         my $cond = 0;
       COND:
         {
@@ -57,11 +62,10 @@ sub find_proc {
                 last COND unless $p->{pid} == $args{pid};
             }
             if (defined $args{name}) {
-                (my $name = $p->{cmndline}) =~ s/\s.*//;
                 if (ref($args{name}) eq 'Regexp') {
-                    last COND unless $name =~ $args{name};
+                    last COND unless $p->{name} =~ $args{name};
                 } else {
-                    last COND unless $name eq $args{name};
+                    last COND unless $p->{name} eq $args{name};
                 }
             }
             if (defined $args{cmndline}) {
