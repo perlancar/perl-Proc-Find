@@ -1,5 +1,12 @@
 Revision history for Proc-Find
 
+0.04    2015-01-03 (PERLANCAR)
+
+	- No functional changes.
+
+	- Rebuild (Generate TODO.md).
+
+
 0.03    2014-12-27 (PERLANCAR)
 
 	- Add our extra field: name (created from cmndline: take first word
