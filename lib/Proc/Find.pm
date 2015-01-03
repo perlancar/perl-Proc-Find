@@ -331,31 +331,6 @@ C<Proc::ProcessTable>'s C<table()> method once.
  find_any_proc([{user=>'ujang'}, {user=>'titin'}]);
 
 
-=head1 TODO
-
-Option to sort result.
-
-Search by PPID.
-
-Search by GID (what about additional/extra groups?).
-
-Search by priority.
-
-Search by start time.
-
-Search by memory size.
-
-Search by controlling terminal.
-
-Search all descendants of a process.
-
-Search all parent processes of a process (thus subsuming the functionality of
-and rendering L<SHARYANTO::Proc::Util> unnecessary).
-
-Write CLI utility C<pfind>, similar to C<pgrep>. Like C<pgrep>, Can also send
-signal in addition to listing processes.
-
-
 =head1 SEE ALSO
 
 L<Proc::Exists> can be used to check if one or more PIDs exist. If you are only
