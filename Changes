@@ -1,3 +1,8 @@
+0.050   2019-11-23  Released-By: PERLANCAR; Urgency: medium
+
+	- find_proc(): Add argument 'filter'.
+
+
 0.04    2015-01-03  Released-By: PERLANCAR
 
 	- No functional changes.
