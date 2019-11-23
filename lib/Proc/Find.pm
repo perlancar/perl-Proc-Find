@@ -32,6 +32,18 @@ sub _table {
     $_table_res;
 }
 
+sub _match {
+    my ($target, $cond, $is_numeric) = @_;
+    if (ref $cond eq 'Regexp') {
+        return 0 unless $target =~ $cond;
+    } elsif (ref $cond eq 'ARRAY') {
+        return 0 unless grep { $is_numeric ? $target == $_ : $target eq $_ } @$cond;
+    } else {
+        return 0 unless $is_numeric ? $target == $cond : $target eq $cond;
+    }
+    1;
+}
+
 sub find_proc {
     my %args = @_;
 
@@ -63,57 +75,49 @@ sub find_proc {
                 local $_ = $p;
                 last COND unless $args{filter}->($p);
             }
-            if (defined $args{pid}) {
-                last COND unless $p->{pid} == $args{pid};
-            }
-            if (defined $args{name}) {
-                if (ref($args{name}) eq 'Regexp') {
-                    last COND unless $p->{name} =~ $args{name};
-                } else {
-                    last COND unless $p->{name} eq $args{name};
-                }
-            }
-            if (defined $args{cmndline}) {
-                if (ref($args{cmndline}) eq 'Regexp') {
-                    last COND unless $p->{cmndline} =~ $args{cmndline};
-                } else {
-                    last COND unless $p->{cmndline} eq $args{cmndline};
-                }
-            }
+            if (defined $args{pid})      { last COND unless _match($p->{pid}     , $args{pid}     , 1) }
+            if (defined $args{name})     { last COND unless _match($p->{name}    , $args{name}    ) }
+            if (defined $args{cmndline}) { last COND unless _match($p->{cmndline}, $args{cmndline}) }
             if (defined $args{exec}) {
                 my $exec = $p->{exec} // '';
                 unless ($args{exec} =~ m!/!) {
                     $exec =~ s!.+/!!;
                 }
-                last COND unless $exec eq $args{exec};
+                last COND unless _match($exec, $args{exec});
             }
             if (defined($args{user}) || defined($args{uid})) {
-                my $val = $args{user} // $args{uid};
-                my $uid;
-                if ($val =~ /\A\d+\z/) {
-                    $uid = $val;
+                my $cond = $args{user} // $args{uid};
+                if ($cond eq 'Regexp') {
+                    last COND unless _match($p->{uid}, $cond, 1); # XXX allow matching against username?
                 } else {
-                    if (!defined($arg_uid)) {
-                        my @pw = getpwnam($val);
-                        $arg_uid = @pw ? $pw[2] : -1;
+                    my @uids;
+                    for my $val (ref $cond eq 'ARRAY' ? @$cond : $cond) {
+                        if ($val =~ /\A\d+\z/) {
+                            push @uids, $val;
+                        } else {
+                            my @pw = getpwnam($val);
+                            push @uids, @pw ? $pw[2] : -1;
+                        }
                     }
-                    $uid = $arg_uid;
+                    last COND unless _match($p->{uid}, \@uids, 1);
                 }
-                last COND unless $p->{uid} == $uid;
             }
             if (defined($args{euser}) || defined($args{euid})) {
-                my $val = $args{euser} // $args{euid};
-                my $euid;
-                if ($val =~ /\A\d+\z/) {
-                    $euid = $val;
+                my $cond = $args{euser} // $args{euid};
+                if ($cond eq 'Regexp') {
+                    last COND unless _match($p->{euid}, $cond, 1); # XXX allow matching against username?
                 } else {
-                    if (!defined($arg_euid)) {
-                        my @pw = getpwnam($val);
-                        $arg_euid = @pw ? $pw[2] : -1;
+                    my @uids;
+                    for my $val (ref $cond eq 'ARRAY' ? @$cond : $cond) {
+                        if ($val =~ /\A\d+\z/) {
+                            push @uids, $val;
+                        } else {
+                            my @pw = getpwnam($val);
+                            push @uids, @pw ? $pw[2] : -1;
+                        }
                     }
-                    $euid = $arg_euid;
+                    last COND unless _match($p->{euid}, \@uids, 1);
                 }
-                last COND unless $p->{euid} == $euid;
             }
 
             $cond = 1;
@@ -242,12 +246,12 @@ Arguments:
 
 Filter by a coderef. The coderef will receive the process record (hashref).
 
-=item * pid => int
+=item * pid => int|array[int]|regex
 
 Find by PID. Note that if you only want to check whether a PID exists, there are
 cheaper methods (see L</"SEE ALSO">).
 
-=item * name => str|regex
+=item * name => str|array[str]|regex
 
 Match against process' "name". Name is taken from the first word of the
 cmndline, with path stripped.
@@ -259,13 +263,13 @@ Example:
  find_proc(name => "bash")
  find_proc(name => qr/^(Thunar|dolphin|konqueror)$/)
 
-=item * cmndline => str|regex
+=item * cmndline => str|array[str]|regex
 
 Match against full cmndline.
 
 If value is regex, will do a regex match instead of exact string comparison.
 
-=item * exec => str
+=item * exec => str|array[str]|regex
 
 Match against program (executable/binary)'s path. If value does not contain a
 path separator character, will be matched against program's name.
@@ -275,24 +279,24 @@ Example:
  find_proc(exec => "perl")          # find any perl
  find_proc(exec => "/usr/bin/perl") # find only a specific perl
 
-=item * user => int|str
+=item * user => int|str|array[int|str]|regex
 
 List processes owned by specified user/UID.
 
 If given a username which does not exist, will simply not match.
 
-=item * uid => int|str
+=item * uid => int|str|array[int|str]|regex
 
 Same as C<user>.
 
-=item * euser => int|str
+=item * euser => int|str|array[int|str]|regex
 
 List processes running as certain effective user/UID (will look against
 C<euid>).
 
 If given a username which does not exist, will simply not match.
 
-=item * euid => int|str
+=item * euid => int|str|array[int|str]|regex
 
 Same as C<euser>.
 
