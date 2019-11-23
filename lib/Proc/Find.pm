@@ -36,6 +36,7 @@ sub find_proc {
     my %args = @_;
 
     my @unknown_args = grep {!/\A(
+                                   filter|
                                    pid|name|cmndline|exec|
                                    user|uid|euser|euid|
                                    table|detail|
@@ -58,6 +59,10 @@ sub find_proc {
         my $cond = 0;
       COND:
         {
+            if (defined $args{filter}) {
+                local $_ = $p;
+                last COND unless $args{filter}->($p);
+            }
             if (defined $args{pid}) {
                 last COND unless $p->{pid} == $args{pid};
             }
@@ -232,6 +237,10 @@ Currently use L<Proc::ProcessTable> to list the processes.
 Arguments:
 
 =over
+
+=item * filter => code
+
+Filter by a coderef. The coderef will receive the process record (hashref).
 
 =item * pid => int
 

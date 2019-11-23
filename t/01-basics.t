@@ -167,6 +167,10 @@ my $table = [
 ];
 
 subtest find_proc => sub {
+    # filter
+    is(~~@{ find_proc(table=>$table, filter=>sub { $_[0]{pid} > 10000 }) }, 3);
+    is(~~@{ find_proc(table=>$table, filter=>sub { $_->{pid} <= 10000 }) }, 1);
+
     # detail
     ok(!ref(find_proc(table=>$table)->[0]), "detail=0");
     is( ref(find_proc(table=>$table, detail=>1)->[0]), "HASH", "detail=1");
